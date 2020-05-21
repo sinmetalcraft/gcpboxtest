@@ -1,2 +1,2 @@
 runtime: go113
-service: storagepubsubnotify
+service: gcpbox
