@@ -37,7 +37,7 @@ func ValidateJWTFromCloudRun(r *http.Request, projectNumber string) error {
 
 	ctx := context.Background()
 
-	aud := fmt.Sprintf("/projects/%s/run/%s", projectNumber, "gcpboxtest") // App Engineのものに似せて、ProjectNumberとCloud Run Service Nameを入れてみた
+	aud := "https://gcpboxtest-73zry4yfvq-an.a.run.app/cloudtasks/run/json-post-task" // audienceはTasksのUriと同じものになる
 
 	payload, err := idtoken.Validate(ctx, jwt, aud)
 	if err != nil {
