@@ -51,7 +51,12 @@ func ValidateJWTFromCloudRun(r *http.Request) error {
 
 	ctx := context.Background()
 
-	aud := "https://gcpboxtest-73zry4yfvq-an.a.run.app/cloudtasks/run/json-post-task" // audienceはTasksのUriと同じものになる
+	// Cloud Tasksの場合は、audienceはTasksのUriと同じものになる
+	//
+	// curl -H "Authorization: Bearer $(gcloud auth print-identity-token)" https://... みたいな感じでUserが投げた場合、
+	// `{謎のID}.apps.googleusercontent.com` になるので、事前にaudienceを知るのは難しそうなので、JWTPayloadをParseして、
+	// audienceを抜き出すことになりそう
+	aud := "https://gcpboxtest-73zry4yfvq-an.a.run.app/cloudtasks/run/json-post-task"
 
 	_, err := idtoken.Validate(ctx, jwt, aud)
 	if err != nil {
