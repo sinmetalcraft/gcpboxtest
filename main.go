@@ -8,6 +8,7 @@ import (
 	"os"
 
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
+	"cloud.google.com/go/compute/metadata"
 	taskbox "github.com/sinmetalcraft/gcpbox/cloudtasks/appengine"
 	metadatabox "github.com/sinmetalcraft/gcpbox/metadata"
 	gcpboxtestCloudtasks "github.com/sinmetalcraft/gcpboxtest/backend/cloudtasks"
@@ -27,6 +28,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	projectNumber, err := metadata.NumericProjectID()
+	if err != nil {
+		panic(err)
+	}
 	gaeService, err := metadatabox.AppEngineService()
 	if err != nil {
 		panic(err)
@@ -41,7 +46,7 @@ func main() {
 		panic(err)
 	}
 
-	cloudtasksHandlers, err := gcpboxtestCloudtasks.NewHandlers(ctx, projectID, gaeService, taskboxService)
+	cloudtasksHandlers, err := gcpboxtestCloudtasks.NewHandlers(ctx, projectID, projectNumber, gaeService, taskboxService)
 	if err != nil {
 		panic(err)
 	}
