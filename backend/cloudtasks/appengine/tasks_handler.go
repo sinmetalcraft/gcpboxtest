@@ -1,4 +1,4 @@
-package cloudtasks
+package appengine
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"google.golang.org/api/idtoken"
 )
 
-func (h *Handlers) AppEnginePushHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Handlers) TasksHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	log.InfoKV(ctx, "request.header", r.Header)

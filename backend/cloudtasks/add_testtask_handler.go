@@ -23,7 +23,7 @@ func (h *Handlers) AddTask(w http.ResponseWriter, r *http.Request) {
 		Name:      "gcpboxtest",
 	}, &taskbox.JsonPostTask{
 		Routing: &taskbox.Routing{
-			Service: h.targetServiceID,
+			Service: h.targetGAEServiceID,
 		},
 		RelativeUri: "/cloudtasks/appengine/json-post-task",
 		Body:        &body,

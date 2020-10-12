@@ -12,6 +12,8 @@ import (
 	taskbox "github.com/sinmetalcraft/gcpbox/cloudtasks/appengine"
 	metadatabox "github.com/sinmetalcraft/gcpbox/metadata"
 	gcpboxtestCloudtasks "github.com/sinmetalcraft/gcpboxtest/backend/cloudtasks"
+	gcpboxtestCloudtasksAppEngine "github.com/sinmetalcraft/gcpboxtest/backend/cloudtasks/appengine"
+	gcpboxtestCloudtasksRun "github.com/sinmetalcraft/gcpboxtest/backend/cloudtasks/run"
 	"github.com/sinmetalcraft/gcpboxtest/backend/storage"
 )
 
@@ -32,8 +34,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	onGAE := true
 	gaeService, err := metadatabox.AppEngineService()
-	if err != nil {
+	if err == metadatabox.ErrNotFound {
+		onGAE = false
+	} else if err != nil {
 		panic(err)
 	}
 
@@ -51,10 +57,24 @@ func main() {
 		panic(err)
 	}
 
+	if onGAE {
+		handlers, err := gcpboxtestCloudtasksAppEngine.NewHandlers(ctx, projectID, projectNumber, gaeService, taskboxService)
+		if err != nil {
+			panic(err)
+		}
+
+		http.HandleFunc("/cloudtasks/appengine/json-post-task", handlers.TasksHandler)
+	} else {
+		handlers, err := gcpboxtestCloudtasksRun.NewHandlers(ctx, projectID, projectNumber, cloudtasksClient)
+		if err != nil {
+			panic(err)
+		}
+
+		http.HandleFunc("/cloudtasks/run/json-post-task", handlers.TasksHandler)
+	}
+
 	log.Printf("Listening on port %s", port)
 	http.HandleFunc("/storage/pubsubnotify", storage.StoragePubSubNotifyHandler)
-	http.HandleFunc("/cloudtasks/appengine/json-post-task", cloudtasksHandlers.AppEnginePushHandler)
-	http.HandleFunc("/cloudtasks/appengine/get-task", cloudtasksHandlers.AppEnginePushHandler)
 	http.HandleFunc("/cloudtasks/appengine/add-task", cloudtasksHandlers.AddTask)
 	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), http.DefaultServeMux); err != nil {
 		log.Printf("failed ListenAndServe err=%+v", err)

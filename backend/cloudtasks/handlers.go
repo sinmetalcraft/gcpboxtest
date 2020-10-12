@@ -7,17 +7,17 @@ import (
 )
 
 type Handlers struct {
-	projectID       string
-	projectNumber   string
-	targetServiceID string
-	taskboxService  *taskbox.Service
+	projectID          string
+	projectNumber      string
+	targetGAEServiceID string
+	taskboxService     *taskbox.Service
 }
 
-func NewHandlers(ctx context.Context, projectID string, projectNumber string, targetServiceID string, taskboxService *taskbox.Service) (*Handlers, error) {
+func NewHandlers(ctx context.Context, projectID string, projectNumber string, targetGAEServiceID string, taskboxService *taskbox.Service) (*Handlers, error) {
 	return &Handlers{
-		projectID:       projectID,
-		projectNumber:   projectNumber,
-		targetServiceID: targetServiceID,
-		taskboxService:  taskboxService,
+		projectID:          projectID,
+		projectNumber:      projectNumber,
+		targetGAEServiceID: targetGAEServiceID,
+		taskboxService:     taskboxService,
 	}, nil
 }
