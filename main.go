@@ -35,6 +35,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	serviceAccountEmail, err := metadatabox.ServiceAccountEmail()
+	if err != nil {
+		panic(err)
+	}
 
 	onGAE := true
 	gaeService, err := metadatabox.AppEngineService()
@@ -53,7 +57,7 @@ func main() {
 		panic(err)
 	}
 
-	cloudtasksHandlers, err := gcpboxtestCloudtasks.NewHandlers(ctx, projectID, projectNumber, gaeService, taskboxService)
+	cloudtasksHandlers, err := gcpboxtestCloudtasks.NewHandlers(ctx, projectID, projectNumber, serviceAccountEmail, gaeService, taskboxService, cloudtasksClient)
 	if err != nil {
 		panic(err)
 	}
