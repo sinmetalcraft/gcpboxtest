@@ -3,18 +3,18 @@ package cloudtasks
 import (
 	"net/http"
 
-	taskbox "github.com/sinmetal/gcpbox/cloudtasks/appengine"
-	"github.com/sinmetal/gcpboxtest/backend"
+	taskbox "github.com/sinmetalcraft/gcpbox/cloudtasks/appengine"
+	"github.com/sinmetalcraft/gcpboxtest/backend/log"
 	"github.com/vvakame/sdlog/aelog"
 )
 
-func AppEnginePushHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Handlers) AppEnginePushHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	backend.Info(ctx, r.Header)
+	log.Info(ctx, r.Header)
 
 	if r.Method == http.MethodPost {
-		backend.Info(ctx, r.Body)
+		log.Info(ctx, r.Body)
 	}
 
 	th, err := taskbox.GetHeader(r)
@@ -23,5 +23,5 @@ func AppEnginePushHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	backend.Info(ctx, th)
+	log.Info(ctx, th)
 }
