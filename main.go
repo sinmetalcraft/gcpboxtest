@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -37,7 +38,7 @@ func main() {
 
 	onGAE := true
 	gaeService, err := metadatabox.AppEngineService()
-	if err == metadatabox.ErrNotFound {
+	if errors.Is(err, metadatabox.ErrNotFound) {
 		onGAE = false
 	} else if err != nil {
 		panic(err)
