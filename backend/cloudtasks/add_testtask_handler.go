@@ -3,6 +3,7 @@ package cloudtasks
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	taskbox "github.com/sinmetalcraft/gcpbox/cloudtasks/appengine"
@@ -71,6 +72,7 @@ func (h *Handlers) addHttpTask(ctx context.Context, body interface{}) (string, e
 		return "", err
 	}
 
+	aud := fmt.Sprintf("/projects/%s/run/%s", h.projectNumber, "gcpboxtest") // App Engineのものに似せて、ProjectNumberとCloud Run Service Nameを入れてみた
 	task, err := h.cloudtasksClient.CreateTask(ctx, &taskspb.CreateTaskRequest{
 		Parent: gcpboxQueue.Parent(),
 		Task: &taskspb.Task{
@@ -81,6 +83,7 @@ func (h *Handlers) addHttpTask(ctx context.Context, body interface{}) (string, e
 					Body:       bb,
 					AuthorizationHeader: &taskspb.HttpRequest_OidcToken{OidcToken: &taskspb.OidcToken{
 						ServiceAccountEmail: h.serviceAccountEmail,
+						Audience:            aud, // Audienceを省略した場合、Cloud TasksがTaskのUrlを設定する
 					}},
 				},
 			},
