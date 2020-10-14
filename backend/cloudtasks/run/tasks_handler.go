@@ -1,4 +1,4 @@
-package appengine
+package run
 
 import (
 	"context"
@@ -76,12 +76,12 @@ func ValidateJWTFromCloudRun(r *http.Request) error {
 func ParseJWTPayload(jwt string) (*JWTPayload, error) {
 	list := strings.Split(jwt, ".")
 	if len(list) != 3 {
-		return nil, fmt.Errorf("invalid JWT")
+		return nil, fmt.Errorf("invalid JWT format")
 	}
 
 	var payload *JWTPayload
-	r := base64.NewDecoder(base64.StdEncoding, strings.NewReader(list[1]))
-	if err := json.NewDecoder(r).Decode(payload); err != nil {
+	r := base64.NewDecoder(base64.RawStdEncoding, strings.NewReader(list[1]))
+	if err := json.NewDecoder(r).Decode(&payload); err != nil {
 		return nil, xerrors.Errorf("invalid JWT :%w", err)
 	}
 	return payload, nil
