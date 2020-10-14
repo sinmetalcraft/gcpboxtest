@@ -89,6 +89,7 @@ func (h *Handlers) addHttpTask(ctx context.Context, url string, body interface{}
 					Body:       bb,
 					AuthorizationHeader: &taskspb.HttpRequest_OidcToken{OidcToken: &taskspb.OidcToken{
 						ServiceAccountEmail: h.serviceAccountEmail,
+						Audience:            "401580979819-84sh4g7gpk72m6lfum4oildt8pjpvmse.apps.googleusercontent.com", // IAPに向けて投げる時は、IAPのClient IDを指定する https://cloud.google.com/iap/docs/authentication-howto#authenticating_from_a_service_account
 					}},
 				},
 			},
