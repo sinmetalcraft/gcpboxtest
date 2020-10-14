@@ -32,6 +32,7 @@ func (h *Handlers) TasksHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.InfoKV(ctx, "tasks.header", th)
+	w.WriteHeader(http.StatusInternalServerError) // Tasks の Test のために必ずコケるようにする
 }
 
 func ValidateJWTHandlerFunc(handler func(w http.ResponseWriter, r *http.Request)) http.Handler {

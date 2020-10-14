@@ -27,6 +27,7 @@ func (h *Handlers) TasksHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		log.InfoKV(ctx, "request.body", r.Body)
 	}
+	w.WriteHeader(http.StatusInternalServerError) // Tasks の Test のために必ずコケるようにする
 }
 
 type JWTPayload struct {
