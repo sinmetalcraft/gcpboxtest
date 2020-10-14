@@ -33,7 +33,13 @@ func (h *Handlers) AddTask(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	tnHttpTask, err := h.addHttpTask(ctx, body)
+	tnHttpTask, err := h.addHttpTask(ctx, "https://gcpboxtest-73zry4yfvq-an.a.run.app/cloudtasks/run/json-post-task", body)
+	if err != nil {
+		aelog.Errorf(ctx, "failed addHttpTask. err=%+v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	tnHttpTaskToGAE, err := h.addHttpTask(ctx, "https://gcpbox-dot-sinmetal-ci.an.r.appspot.com/cloudtasks/appengine/json-post-task", body)
 	if err != nil {
 		aelog.Errorf(ctx, "failed addHttpTask. err=%+v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -41,11 +47,13 @@ func (h *Handlers) AddTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res := struct {
-		AppEngineTaskName string
-		HttpTaskName      string
+		AppEngineTaskName       string
+		HttpTaskToCloudRunName  string
+		HttpTaskToAppEngineName string
 	}{
-		AppEngineTaskName: tnAppEngine,
-		HttpTaskName:      tnHttpTask,
+		AppEngineTaskName:       tnAppEngine,
+		HttpTaskToCloudRunName:  tnHttpTask,
+		HttpTaskToAppEngineName: tnHttpTaskToGAE,
 	}
 
 	w.Header().Set("content-type", "application/json")
@@ -65,7 +73,7 @@ func (h *Handlers) addAppEngineTask(ctx context.Context, body interface{}) (stri
 	return taskName, err
 }
 
-func (h *Handlers) addHttpTask(ctx context.Context, body interface{}) (string, error) {
+func (h *Handlers) addHttpTask(ctx context.Context, url string, body interface{}) (string, error) {
 	bb, err := json.Marshal(body)
 	if err != nil {
 		return "", err
@@ -76,7 +84,7 @@ func (h *Handlers) addHttpTask(ctx context.Context, body interface{}) (string, e
 		Task: &taskspb.Task{
 			MessageType: &taskspb.Task_HttpRequest{
 				HttpRequest: &taskspb.HttpRequest{
-					Url:        "https://gcpboxtest-73zry4yfvq-an.a.run.app/cloudtasks/run/json-post-task",
+					Url:        url,
 					HttpMethod: taskspb.HttpMethod_POST,
 					Body:       bb,
 					AuthorizationHeader: &taskspb.HttpRequest_OidcToken{OidcToken: &taskspb.OidcToken{
@@ -89,5 +97,6 @@ func (h *Handlers) addHttpTask(ctx context.Context, body interface{}) (string, e
 	if err != nil {
 		return "", err
 	}
+
 	return task.Name, nil
 }
