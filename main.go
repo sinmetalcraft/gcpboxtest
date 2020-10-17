@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
+	"time"
 
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	"cloud.google.com/go/compute/metadata"
@@ -15,6 +15,7 @@ import (
 	gcpboxtestCloudtasks "github.com/sinmetalcraft/gcpboxtest/backend/cloudtasks"
 	gcpboxtestCloudtasksAppEngine "github.com/sinmetalcraft/gcpboxtest/backend/cloudtasks/appengine"
 	gcpboxtestCloudtasksRun "github.com/sinmetalcraft/gcpboxtest/backend/cloudtasks/run"
+	"github.com/sinmetalcraft/gcpboxtest/backend/log"
 	"github.com/sinmetalcraft/gcpboxtest/backend/storage"
 )
 
@@ -24,7 +25,7 @@ func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
-		log.Printf("Defaulting to port %s", port)
+		fmt.Printf("Defaulting to port %s", port)
 	}
 
 	projectID, err := metadatabox.ProjectID()
@@ -78,10 +79,22 @@ func main() {
 		http.HandleFunc("/cloudtasks/run/json-post-task", handlers.TasksHandler)
 	}
 
-	log.Printf("Listening on port %s", port)
+	fmt.Printf("Listening on port %s", port)
 	http.HandleFunc("/storage/pubsubnotify", storage.StoragePubSubNotifyHandler)
 	http.HandleFunc("/cloudtasks/appengine/add-task", cloudtasksHandlers.AddTask)
+	http.HandleFunc("/", HelloHandler)
 	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), http.DefaultServeMux); err != nil {
-		log.Printf("failed ListenAndServe err=%+v", err)
+		fmt.Printf("failed ListenAndServe err=%+v", err)
+	}
+}
+
+func HelloHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	log.InfoKV(ctx, "request.header", r.Header)
+
+	_, err := w.Write([]byte(fmt.Sprintf("Hello GCPBOXTEST : %s", time.Now().String())))
+	if err != nil {
+		fmt.Println(err.Error())
 	}
 }
