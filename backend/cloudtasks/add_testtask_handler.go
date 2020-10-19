@@ -3,11 +3,14 @@ package cloudtasks
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	taskbox "github.com/sinmetalcraft/gcpbox/cloudtasks/appengine"
+	"github.com/sinmetalcraft/gcpboxtest/backend/cloudtasks/appengine"
 	"github.com/vvakame/sdlog/aelog"
 	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
+	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 var (
@@ -33,13 +36,15 @@ func (h *Handlers) AddTask(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	tnHttpTask, err := h.addHttpTask(ctx, "https://gcpboxtest-73zry4yfvq-an.a.run.app/cloudtasks/run/json-post-task", body)
+	tnHttpTask, err := h.addHttpTask(ctx, "https://gcpboxtest-73zry4yfvq-an.a.run.app/cloudtasks/run/json-post-task", "", body)
 	if err != nil {
 		aelog.Errorf(ctx, "failed addHttpTask. err=%+v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	tnHttpTaskToGAE, err := h.addHttpTask(ctx, "https://gcpbox-dot-sinmetal-ci.an.r.appspot.com/cloudtasks/appengine/json-post-task", body)
+
+	const iapClientID = "401580979819-84sh4g7gpk72m6lfum4oildt8pjpvmse.apps.googleusercontent.com" // IAPに向けて投げる時は、IAPのClient IDを指定する https://cloud.google.com/iap/docs/authentication-howto#authenticating_from_a_service_account
+	tnHttpTaskToGAE, err := h.addHttpTask(ctx, fmt.Sprintf("https://gcpbox-dot-sinmetal-ci.an.r.appspot.com%s", appengine.HttpTargetTasksHandlerUri), iapClientID, body)
 	if err != nil {
 		aelog.Errorf(ctx, "failed addHttpTask. err=%+v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -73,7 +78,7 @@ func (h *Handlers) addAppEngineTask(ctx context.Context, body interface{}) (stri
 	return taskName, err
 }
 
-func (h *Handlers) addHttpTask(ctx context.Context, url string, body interface{}) (string, error) {
+func (h *Handlers) addHttpTask(ctx context.Context, url string, audience string, body interface{}) (string, error) {
 	bb, err := json.Marshal(body)
 	if err != nil {
 		return "", err
@@ -82,6 +87,7 @@ func (h *Handlers) addHttpTask(ctx context.Context, url string, body interface{}
 	task, err := h.cloudtasksClient.CreateTask(ctx, &taskspb.CreateTaskRequest{
 		Parent: gcpboxQueue.Parent(),
 		Task: &taskspb.Task{
+			DispatchDeadline: &durationpb.Duration{Seconds: 30 * 60},
 			MessageType: &taskspb.Task_HttpRequest{
 				HttpRequest: &taskspb.HttpRequest{
 					Url:        url,
@@ -89,7 +95,7 @@ func (h *Handlers) addHttpTask(ctx context.Context, url string, body interface{}
 					Body:       bb,
 					AuthorizationHeader: &taskspb.HttpRequest_OidcToken{OidcToken: &taskspb.OidcToken{
 						ServiceAccountEmail: h.serviceAccountEmail,
-						Audience:            "401580979819-84sh4g7gpk72m6lfum4oildt8pjpvmse.apps.googleusercontent.com", // IAPに向けて投げる時は、IAPのClient IDを指定する https://cloud.google.com/iap/docs/authentication-howto#authenticating_from_a_service_account
+						Audience:            audience,
 					}},
 				},
 			},

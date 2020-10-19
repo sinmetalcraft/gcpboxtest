@@ -69,7 +69,8 @@ func main() {
 			panic(err)
 		}
 
-		http.HandleFunc("/cloudtasks/appengine/json-post-task", handlers.TasksHandler)
+		http.HandleFunc(gcpboxtestCloudtasksAppEngine.AppEngineTasksHandlerUri, handlers.AppEngineTasksHandler)
+		http.HandleFunc(gcpboxtestCloudtasksAppEngine.HttpTargetTasksHandlerUri, handlers.HttpTargetTasksHandler)
 	} else {
 		handlers, err := gcpboxtestCloudtasksRun.NewHandlers(ctx, projectID, projectNumber, cloudtasksClient)
 		if err != nil {

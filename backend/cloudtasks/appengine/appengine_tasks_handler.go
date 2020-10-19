@@ -11,13 +11,14 @@ import (
 	"google.golang.org/api/idtoken"
 )
 
-func (h *Handlers) TasksHandler(w http.ResponseWriter, r *http.Request) {
+const AppEngineTasksHandlerUri = "/cloudtasks/appengine/json-post-task"
+
+func (h *Handlers) AppEngineTasksHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	log.InfoKV(ctx, "request.header", r.Header)
+	log.InfoKV(ctx, "AppEngineTasksHandler.request.header", r.Header)
 
-	// Cloud Tasks からのRequestだと、 "X-Goog-IAP-JWT-Assertion" は付いてない
-	// App Engine Task の場合は “X-Google-Internal-Skipadmincheck”: [“true”] というのが付いている
+	// App Engine Task の場合は “X-Google-Internal-Skipadmincheck”: [“true”] が付いてる
 	if err := ValidateJWTFromAppEngine(r, h.projectNumber, h.projectID); err != nil {
 		aelog.Errorf(ctx, "failed ValidateJWTFromAppEngine. pn:%s,pID:%s, %v\n", h.projectNumber, h.projectID, err)
 	}

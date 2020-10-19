@@ -19,7 +19,7 @@ func (h *Handlers) TasksHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.InfoKV(ctx, "request.header", r.Header)
 	if err := ValidateJWTFromCloudRun(r); err != nil {
-		aelog.Errorf(ctx, "failed ValidateJWTFromAppEngine. err=%+v", err)
+		aelog.Errorf(ctx, "failed ValidateJWTFromCloudRun. err=%+v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
