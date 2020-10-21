@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/sinmetalcraft/gcpboxtest/backend/log"
+	"github.com/sinmetalcraft/gcpboxtest/backend/jwt"
 	"google.golang.org/api/idtoken"
 )
 
@@ -15,16 +15,19 @@ func IsGCPInternal(r *http.Request) bool {
 
 // validateJWTFromAppEngine validates a JWT found in the
 // "x-goog-iap-jwt-assertion" header.
-func ValidateJWTFromAppEngine(ctx context.Context, r *http.Request, projectNumber string, projectID string) error {
+func ValidateJWTFromAppEngine(ctx context.Context, r *http.Request, projectNumber string, projectID string) (*jwt.JWTPayload, error) {
 	iapJWT := r.Header.Get("X-Goog-IAP-JWT-Assertion")
 	aud := fmt.Sprintf("/projects/%s/apps/%s", projectNumber, projectID)
 
-	payload, err := idtoken.Validate(ctx, iapJWT, aud)
+	_, err := idtoken.Validate(ctx, iapJWT, aud)
 	if err != nil {
-		return fmt.Errorf("idtoken.Validate: %v", err)
+		return nil, fmt.Errorf("idtoken.Validate: %v", err)
 	}
 
-	log.InfoKV(ctx, "idtolen.payload", payload)
+	payload, err := jwt.ParseJWTPayload(iapJWT)
+	if err != nil {
+		return nil, err
+	}
 
-	return nil
+	return payload, nil
 }

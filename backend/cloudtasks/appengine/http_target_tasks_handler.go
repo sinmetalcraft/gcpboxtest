@@ -15,9 +15,12 @@ func (h *Handlers) HttpTargetTasksHandler(w http.ResponseWriter, r *http.Request
 	log.InfoKV(ctx, "HttpTargetTasksHandler.request.header", r.Header)
 
 	// Cloud Tasks Http Target Task を IAP 貫通させると X-Goog-Iap-Jwt-Assertion が付いてる
-	if err := ValidateJWTFromAppEngine(ctx, r, h.projectNumber, h.projectID); err != nil {
+	payload, err := ValidateJWTFromAppEngine(ctx, r, h.projectNumber, h.projectID)
+	if err != nil {
 		aelog.Errorf(ctx, "failed ValidateJWTFromAppEngine. pn:%s,pID:%s, %v\n", h.projectNumber, h.projectID, err)
 	}
+
+	log.InfoKV(ctx, "JWT.payload", payload)
 
 	if r.Method == http.MethodPost {
 		log.InfoKV(ctx, "request.body", r.Body)
