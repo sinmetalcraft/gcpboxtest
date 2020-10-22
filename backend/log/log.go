@@ -1,4 +1,4 @@
-package backend
+package log
 
 import (
 	"context"
@@ -14,4 +14,13 @@ func Info(ctx context.Context, v interface{}) {
 		return
 	}
 	aelog.Infof(ctx, "%+v", string(j))
+}
+
+func InfoKV(ctx context.Context, k string, v interface{}) {
+	j, err := json.Marshal(v)
+	if err != nil {
+		aelog.Errorf(ctx, "failed json.Marshal(). err=%+v", err)
+		return
+	}
+	aelog.Infof(ctx, "%s:%+v", k, string(j))
 }
