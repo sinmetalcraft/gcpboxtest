@@ -1,15 +1,12 @@
 package run
 
 import (
-	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
-	"github.com/sinmetalcraft/gcpboxtest/backend/jwt"
+	tasksbox "github.com/sinmetalcraft/gcpbox/cloudtasks"
 	"github.com/sinmetalcraft/gcpboxtest/backend/log"
 	"github.com/vvakame/sdlog/aelog"
-	"google.golang.org/api/idtoken"
 )
 
 func (h *Handlers) TasksHandler(w http.ResponseWriter, r *http.Request) {
@@ -22,8 +19,9 @@ func (h *Handlers) TasksHandler(w http.ResponseWriter, r *http.Request) {
 	// curl -H "Authorization: Bearer $(gcloud auth print-identity-token)" https://... みたいな感じでUserが投げた場合、
 	// `{謎のID}.apps.googleusercontent.com` になるので、事前にaudienceを知るのは難しそうなので、JWTPayloadをParseして、
 	// audienceを抜き出すことになりそう
-	payload, err := ValidateJWTFromCloudRun(ctx, r, "https://gcpboxtest-73zry4yfvq-an.a.run.app/cloudtasks/run/json-post-task")
+	payload, err := tasksbox.ValidateJWTFromInvoker(ctx, r, fmt.Sprintf("%s/cloudtasks/run/json-post-task", h.gcpboxtestCloudRunService.URL))
 	if err != nil {
+
 		aelog.Errorf(ctx, "failed ValidateJWTFromCloudRun. err=%+v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -34,25 +32,13 @@ func (h *Handlers) TasksHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		log.InfoKV(ctx, "request.body", r.Body)
 	}
-}
 
-// validateJWTFromAppEngine validates a JWT found in the
-func ValidateJWTFromCloudRun(ctx context.Context, r *http.Request, audience string) (*jwt.JWTPayload, error) {
-	autzHeader := r.Header.Get("Authorization")
-	tokens := strings.Split(autzHeader, " ")
-	if len(tokens) < 1 {
-		return nil, fmt.Errorf("invalid token")
-	}
-	autzHeader = tokens[1]
-
-	_, err := idtoken.Validate(ctx, autzHeader, audience)
+	th, err := tasksbox.GetHeader(r)
 	if err != nil {
-		return nil, fmt.Errorf("idtoken.Validate: %v", err)
-	}
-	payload, err := jwt.ParseJWTPayload(autzHeader)
-	if err != nil {
-		return nil, err
+		aelog.Errorf(ctx, "failed tasksbox.GetHeader. err=%+v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	return payload, nil
+	log.InfoKV(ctx, "tasks.Header", th)
 }

@@ -3,6 +3,8 @@ package appengine
 import (
 	"net/http"
 
+	tasksbox "github.com/sinmetalcraft/gcpbox/cloudtasks"
+	gaetasksbox "github.com/sinmetalcraft/gcpbox/cloudtasks/appengine"
 	"github.com/sinmetalcraft/gcpboxtest/backend/log"
 	"github.com/vvakame/sdlog/aelog"
 )
@@ -15,7 +17,7 @@ func (h *Handlers) HttpTargetTasksHandler(w http.ResponseWriter, r *http.Request
 	log.InfoKV(ctx, "HttpTargetTasksHandler.request.header", r.Header)
 
 	// Cloud Tasks Http Target Task を IAP 貫通させると X-Goog-Iap-Jwt-Assertion が付いてる
-	payload, err := ValidateJWTFromAppEngine(ctx, r, h.projectNumber, h.projectID)
+	payload, err := gaetasksbox.ValidateJWTFromHttpTargetTask(ctx, r, h.projectNumber, h.projectID)
 	if err != nil {
 		aelog.Errorf(ctx, "failed ValidateJWTFromAppEngine. pn:%s,pID:%s, %v\n", h.projectNumber, h.projectID, err)
 	}
@@ -26,5 +28,12 @@ func (h *Handlers) HttpTargetTasksHandler(w http.ResponseWriter, r *http.Request
 		log.InfoKV(ctx, "request.body", r.Body)
 	}
 
-	// TODO Header Check
+	th, err := tasksbox.GetHeader(r)
+	if err != nil {
+		aelog.Errorf(ctx, "failed taskbox.GetHeader. err=%+v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	log.InfoKV(ctx, "cloudtasks.Header", th)
 }

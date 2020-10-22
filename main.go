@@ -10,8 +10,11 @@ import (
 
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	"cloud.google.com/go/compute/metadata"
+	"github.com/sinmetalcraft/gcpbox"
+	cloudrunbox "github.com/sinmetalcraft/gcpbox/cloudrun"
 	taskbox "github.com/sinmetalcraft/gcpbox/cloudtasks/appengine"
 	metadatabox "github.com/sinmetalcraft/gcpbox/metadata"
+	gaemetadatabox "github.com/sinmetalcraft/gcpbox/metadata/appengine"
 	gcpboxtestCloudtasks "github.com/sinmetalcraft/gcpboxtest/backend/cloudtasks"
 	gcpboxtestCloudtasksAppEngine "github.com/sinmetalcraft/gcpboxtest/backend/cloudtasks/appengine"
 	gcpboxtestCloudtasksRun "github.com/sinmetalcraft/gcpboxtest/backend/cloudtasks/run"
@@ -41,8 +44,21 @@ func main() {
 		panic(err)
 	}
 
+	runApiContainer, err := cloudrunbox.NewPrimitiveAPIContainer(ctx, gcpbox.TokyoRegion)
+	if err != nil {
+		panic(err)
+	}
+	cloudrunboxAdminService, err := cloudrunbox.NewAdminService(ctx, runApiContainer)
+	if err != nil {
+		panic(err)
+	}
+	gcpboxtestRunService, err := cloudrunboxAdminService.GetRunService(ctx, projectID, "gcpboxtest")
+	if err != nil {
+		panic(err)
+	}
+
 	onGAE := true
-	gaeService, err := metadatabox.AppEngineService()
+	gaeService, err := gaemetadatabox.Service()
 	if errors.Is(err, metadatabox.ErrNotFound) {
 		onGAE = false
 	} else if err != nil {
@@ -58,7 +74,15 @@ func main() {
 		panic(err)
 	}
 
-	cloudtasksHandlers, err := gcpboxtestCloudtasks.NewHandlers(ctx, projectID, projectNumber, serviceAccountEmail, gaeService, taskboxService, cloudtasksClient)
+	cloudtasksHandlers, err := gcpboxtestCloudtasks.NewHandlers(ctx, &gcpboxtestCloudtasks.HandlersConfig{
+		ProjectID:                 projectID,
+		ProjectNumber:             projectNumber,
+		ServiceAccountEmail:       serviceAccountEmail,
+		TargetGAEServiceID:        gaeService,
+		TaskboxService:            taskboxService,
+		CloudtasksClient:          cloudtasksClient,
+		GcpboxtestCloudRunService: gcpboxtestRunService,
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -72,7 +96,7 @@ func main() {
 		http.HandleFunc(gcpboxtestCloudtasksAppEngine.AppEngineTasksHandlerUri, handlers.AppEngineTasksHandler)
 		http.HandleFunc(gcpboxtestCloudtasksAppEngine.HttpTargetTasksHandlerUri, handlers.HttpTargetTasksHandler)
 	} else {
-		handlers, err := gcpboxtestCloudtasksRun.NewHandlers(ctx, projectID, projectNumber, cloudtasksClient)
+		handlers, err := gcpboxtestCloudtasksRun.NewHandlers(ctx, projectID, projectNumber, cloudtasksClient, gcpboxtestRunService)
 		if err != nil {
 			panic(err)
 		}

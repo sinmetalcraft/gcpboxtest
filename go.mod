@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	cloud.google.com/go v0.68.0
-	github.com/sinmetalcraft/gcpbox v1.0.0
+	github.com/sinmetalcraft/gcpbox v1.2.0
 	github.com/vvakame/sdlog v0.0.0-20200409072131-7c0d359efddc
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	google.golang.org/api v0.32.0

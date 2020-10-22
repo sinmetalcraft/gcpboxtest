@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	taskbox "github.com/sinmetalcraft/gcpbox/cloudtasks/appengine"
+	tasksbox "github.com/sinmetalcraft/gcpbox/cloudtasks/appengine"
 	"github.com/sinmetalcraft/gcpboxtest/backend/cloudtasks/appengine"
 	"github.com/vvakame/sdlog/aelog"
 	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	gcpboxQueue = &taskbox.Queue{
+	gcpboxQueue = &tasksbox.Queue{
 		ProjectID: "sinmetal-ci",
 		Region:    "asia-northeast1",
 		Name:      "gcpboxtest",
@@ -36,7 +36,7 @@ func (h *Handlers) AddTask(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	tnHttpTask, err := h.addHttpTask(ctx, "https://gcpboxtest-73zry4yfvq-an.a.run.app/cloudtasks/run/json-post-task", "", body)
+	tnHttpTask, err := h.addHttpTask(ctx, fmt.Sprintf("%s/cloudtasks/run/json-post-task", h.gcpboxtestCloudRunService.URL), "", body)
 	if err != nil {
 		aelog.Errorf(ctx, "failed addHttpTask. err=%+v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -68,8 +68,8 @@ func (h *Handlers) AddTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) addAppEngineTask(ctx context.Context, body interface{}) (string, error) {
-	taskName, err := h.taskboxService.CreateJsonPostTask(ctx, gcpboxQueue, &taskbox.JsonPostTask{
-		Routing: &taskbox.Routing{
+	taskName, err := h.taskboxService.CreateJsonPostTask(ctx, gcpboxQueue, &tasksbox.JsonPostTask{
+		Routing: &tasksbox.Routing{
 			Service: h.targetGAEServiceID,
 		},
 		RelativeUri: "/cloudtasks/appengine/json-post-task",
